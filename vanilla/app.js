@@ -174,20 +174,26 @@ contactsContainer.addEventListener('click', function(e) {
 
 //BARRE DE RECHERCHE (BONUS)
 searchInput.addEventListener('input', function() {
-    const filterText = this.value.toLowerCase();
+    //Nettoyage du texte et découpage en plusieurs mots separés pau un espace
+    //Filter boolean permet d'éviter les bugs si l'user met plusieurs espaces
+    const filterText = this.value.toLowerCase().trim().split(/\s+/).filter(Boolean);
     const rows = contactsContainer.querySelectorAll('tr');
 
-    rows.forEach(row => {
-        const firstname = row.querySelectorAll('.isEditing-hidden')[0].innerText.toLowerCase();
-        const lastname = row.querySelectorAll('.isEditing-hidden')[0].innerText.toLowerCase();
-        const email = row.querySelectorAll('.isEditing-hidden')[0].innerText.toLowerCase();
+    rows.forEach((row)=> {
+        //On récupère les contacts dans le tableau grâce à son ID unique
+        const item = contacts.find(item => item.id === Number(row.dataset.id));
+
+        if (item) {
+        //On fusionne les datas depuis l'objet Javascript
+        const fullRowText = `${item.firstname} ${item.lastname} ${item.email}`.toLowerCase();
+
+        //On verifie si chaque mot se trouve dans le texte de la ligne
+        //every() renvoi true seulement si tous les mots sont presents
+        const matchesAllWords = filterText.every(word => fullRowText.includes(word));
 
         //Si le texte écrit correspond aux datas on affiche la ligne sinon on la cache
-        if (firstname.includes(filterText) || lastname.includes(filterText) || email.includes(filterText)) {
-            row.style.display = "";
-        } else {
-            row.style.display = "none";
-        }
+        row.style.display = matchesAllWords ? "" : "none";
+        }    
     });
 });
 
