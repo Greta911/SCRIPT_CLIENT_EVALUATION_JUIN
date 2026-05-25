@@ -31,7 +31,23 @@ function contactApp() {
     },
     saveToStorage() {
         localStorage.contacts = JSON.stringify(this.contacts);
-    }
+    },
+
+    //Suppression d'un contact
+    deleteContact(id) {
+        this.contacts = this.contacts.filter(item => item.id !== id);
+        this.saveToStorage();
+    },
+
+    //Filtrer le contacts pour la barre de recherche
+    filteredContacts() {
+        if (!this.search.trim()) return this.contacts;
+        const searchElt = this.search.toLowerCase().trim().split(/\s+/);
+        return this.contacts.filter(item => {
+            const fullText = `${item.firstname} ${item.lastname} ${item.email}`.toLowerCase();
+            return searchElt.every(word => fullText.includes(word));
+            });
+        }
 
     };
 }
