@@ -21,11 +21,11 @@ const btnAdd = appElement.querySelector("#btn-add");
 
 // Ajout initial des items dans le DOM
 contacts.forEach((item) => {
-    appendNewItemInDOM(item);
+    createContactInDOM(item);
 });
 
 //Function appendNewItemInDOM
-function appendNewItemInDOM(item) {
+function createContactInDOM(item) {
     const newItem = document.createElement('tr');
     contactsContainer.append(newItem);
 
@@ -109,7 +109,7 @@ btnAdd.addEventListener('click', function () {
     };
 
     appendNewItemInARRAY(newItem);
-    appendNewItemInDOM(newItem);
+    createContactInDOM(newItem);
 
     //Vider le formulaire
     addFirstname.value = "";
@@ -120,20 +120,20 @@ btnAdd.addEventListener('click', function () {
 //Capture par délégation pour les actions modifier, valider et supprimer
 contactsContainer.addEventListener('click', function(e) {
     //Récupère le tr du DOM
-    const itemElt= e.target.closest('tr');
+    const contactElement= e.target.closest('tr');
     //Recupère l'item du ARRAY
-    const item = contacts.find(item => item.id === Number(itemElt.dataset.id));
+    const contactFound = contacts.find(item => item.id === Number(contactElement.dataset.id));
     //MODIFIER
     if (e.target.matches('.btn-edit') || e.target.closest('.btn-edit')) {
-        item.isEditing = true;
-        itemElt.classList.add('isEditing');
+        contactFound.isEditing = true;
+        contactElement.classList.add('isEditing');
         updateLocalStorage();
     }
     //SUPPRIMER
     if (e.target.matches('.btn-delete') || e.target.closest('.btn-delete')) {
-        const itemIndex = contacts.findIndex(item => item.id === Number(itemElt.dataset.id));
+        const itemIndex = contacts.findIndex(item => item.id === Number(contactElement.dataset.id));
         contacts.splice(itemIndex, 1);
-        itemElt.remove();
+        contactElement.remove();
         updateLocalStorage();
         renderContactsCount();
     }
@@ -142,31 +142,31 @@ contactsContainer.addEventListener('click', function(e) {
 //Enregistrer le modif lors du click sur le bouton Check
 contactsContainer.addEventListener('click', function(e) {
     //VALIDER
-    const itemElt = e.target.closest('tr');
-    if (!itemElt) return;
+    const contactElement = e.target.closest('tr');
+    if (!contactElement) return;
     if (e.target.matches('.btn-check') || e.target.closest('.btn-check')) {
-        const item = contacts.find(item => item.id === Number(itemElt.dataset.id));
-        if (!item) {
+        const contactFound = contacts.find(item => item.id === Number(contactElement.dataset.id));
+        if (!contactElement) {
             console.warn("Impossible de modifier : le contact n'existe pas dans le tableau.");
             return; 
         }
-        const newFirstname = itemElt.querySelector('.input-firstname').value;
-        const newLastname = itemElt.querySelector('.input-lastname').value;
-        const newEmail = itemElt.querySelector('.input-email').value;
+        const newFirstname = contactElement.querySelector('.input-firstname').value;
+        const newLastname = contactElement.querySelector('.input-lastname').value;
+        const newEmail = contactElement.querySelector('.input-email').value;
 
         //Mise à jour du ARRAY
-        item.firstname= newFirstname;
-        item.lastname= newLastname;
-        item.email= newEmail;
-        item.isEditing= false;
+        contactFound.firstname= newFirstname;
+        contactFound.lastname= newLastname;
+        contactFound.email= newEmail;
+        contactFound.isEditing= false;
 
         //Mise à jour du DOM
-        itemElt.querySelectorAll('.isEditing-hidden')[0].innerText = newFirstname;
-        itemElt.querySelectorAll('.isEditing-hidden')[1].innerText = newLastname;
-        itemElt.querySelectorAll('.isEditing-hidden')[2].innerText = newEmail;
+        contactElement.querySelectorAll('.isEditing-hidden')[0].innerText = newFirstname;
+        contactElement.querySelectorAll('.isEditing-hidden')[1].innerText = newLastname;
+        contactElement.querySelectorAll('.isEditing-hidden')[2].innerText = newEmail;
 
         //Sortie du mode edition
-        itemElt.classList.remove('isEditing');
+        contactElement.classList.remove('isEditing');
 
         updateLocalStorage();
     }
