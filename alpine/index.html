@@ -91,67 +91,96 @@
           <thead>
             <tr class="bg-gray-200">
               <th class="text-left p-4 rounded-tl-lg">
-                <a href="#">Firstname</a>
+                <a href="#" @click.prevent="toggleSort('firstname')"
+                  >Firstname
+                  <i
+                    class="fa-solid"
+                    :class="sortBy === 'firstname' ? (sortOrder === 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort text-gray-400'"
+                  ></i
+                ></a>
               </th>
-              <th class="text-left p-4"><a href="#">Lastname</a></th>
               <th class="text-left p-4">
-                <a href="#">Email</a>
+                <a href="#" @click.prevent="toggleSort('lastname')"
+                  >Lastname
+                  <i
+                    class="fa-solid"
+                    :class="sortBy === 'lastname' ? (sortOrder === 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort text-gray-400'"
+                  ></i
+                ></a>
+              </th>
+              <th class="text-left p-4">
+                <a href="#" @click.prevent="toggleSort('email')"
+                  >Email
+                  <i
+                    class="fa-solid"
+                    :class="sortBy === 'email' ? (sortOrder === 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort text-gray-400'"
+                  ></i
+                ></a>
               </th>
               <th class="text-right p-4 rounded-tr-lg">Actions</th>
             </tr>
           </thead>
           <tbody>
-            <template x-for="item in filteredContacts()" :key="item.id">
+            <template x-for="contact in visibleContacts" :key="contact.id">
               <tr
                 class="contact-row"
-                :class="item.isEditing ? 'bg-gray-100' : ''"
+                :class="contact.isEditing ? 'bg-gray-100' : ''"
               >
                 <td class="p-4">
-                  <span x-show="!item.isEditing" x-text="item.firstname"></span>
+                  <span
+                    x-show="!contact.isEditing"
+                    x-text="contact.firstname"
+                  ></span>
                   <input
-                    x-show="item.isEditing"
+                    x-show="contact.isEditing"
                     type="text"
                     class="w-full px-2 py-1 border rounded"
-                    x-model="item.firstname"
+                    x-model="contact.firstname"
                   />
                 </td>
                 <td class="p-4">
-                  <span x-show="!item.isEditing" x-text="item.lastname"></span>
+                  <span
+                    x-show="!contact.isEditing"
+                    x-text="contact.lastname"
+                  ></span>
                   <input
-                    x-show="item.isEditing"
+                    x-show="contact.isEditing"
                     type="text"
                     class="w-full px-2 py-1 border rounded"
-                    x-model="item.lastname"
+                    x-model="contact.lastname"
                   />
                 </td>
                 <td class="p-4">
-                  <span x-show="!item.isEditing" x-text="item.email"></span>
+                  <span
+                    x-show="!contact.isEditing"
+                    x-text="contact.email"
+                  ></span>
                   <input
-                    x-show="item.isEditing"
+                    x-show="contact.isEditing"
                     type="text"
                     class="w-full px-2 py-1 border rounded"
-                    x-model="item.email"
+                    x-model="contact.email"
                   />
                 </td>
                 <td class="p-4">
                   <div class="flex justify-end space-x-2">
                     <button
-                      x-show="!item.isEditing"
-                      @click="item.isEditing = true; saveToStorage()"
+                      x-show="!contact.isEditing"
+                      @click="contact.isEditing = true;"
                       class="bg-yellow-400 hover:bg-yellow-500 text-white py-1 px-3 rounded text-sm"
                     >
                       <i class="fa-solid fa-pen-to-square"></i>
                     </button>
                     <button
-                      x-show="!item.isEditing"
-                      @click="deleteContact(item.id)"
+                      x-show="!contact.isEditing"
+                      @click="deleteContact(contact.id)"
                       class="bg-red-500 hover:bg-red-700 text-white py-1 px-3 rounded text-sm"
                     >
                       <i class="fa-solid fa-trash"></i>
                     </button>
                     <button
-                      x-show="item.isEditing"
-                      @click="item.isEditing = false; saveToStorage()"
+                      x-show="contact.isEditing"
+                      @click="contact.isEditing = false;"
                       class="bg-green-500 hover:bg-green-700 text-white py-1 px-3 rounded text-sm"
                     >
                       <i class="fa-solid fa-check"></i>
