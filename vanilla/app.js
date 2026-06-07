@@ -1,106 +1,131 @@
-//Initialisation du localStorage
-
-/*localStorage.contacts= JSON.stringify([
-    {firstname: "Alex", lastname: "Doe", email: "alexdoe@mail.com", isEditing: false},
-    {firstname: "Anita", lastname: "Smith", email: "anitasmith@mail.com", isEditing: true},
-]);*/
-
-const contacts = JSON.parse(localStorage.contacts) || [];
+// Initialisation et récupération sécurisée des données
+const contacts = JSON.parse(localStorage.getItem('contacts')) || [];
 const appElement = document.querySelector('#app');
 
-//Liste, compteur et recherche
+// Liste, compteur et recherche
 const contactsContainer = appElement.querySelector(".contacts-table tbody");
 const contactsCountElement = appElement.querySelector("#contacts-count");
 const searchInput = appElement.querySelector("#input-search");
 
-//Eléments du formulaire d'ajout
+// Éléments des en-têtes du tableau pour le tri
+const sortableHeaders = appElement.querySelectorAll(".contacts-table th[data-sort]");
+
+// Éléments du formulaire d'ajout
 const addFirstname = appElement.querySelector("#input-firstname");
 const addLastname = appElement.querySelector("#input-lastname");
 const addEmail = appElement.querySelector("#input-email");
 const btnAdd = appElement.querySelector("#btn-add");
 
-// Ajout initial des items dans le DOM
-contacts.forEach((item) => {
-    createContactInDOM(item);
-});
+// Variables d'état pour le tri dynamique (Équivalent du State Alpine)
+let sortBy = 'firstname';
+let sortOrder = 'asc';
 
-//Function appendNewItemInDOM
-function createContactInDOM(item) {
-    const newItem = document.createElement('tr');
-    contactsContainer.append(newItem);
+// -----------------------------------------------------------------------------
+// 🎯 LA FONCTION CENTRALE : Génération du résultat visuel (Filtre + Tri + Render)
+// -----------------------------------------------------------------------------
+function renderList() {
+    // Copie non-destructive pour le traitement
+    let processedContacts = [...contacts];
 
-    newItem.outerHTML = 
-    `
-    <tr data-id="${item.id}" class="contact-row ${item.isEditing ? 'isEditing' : ''}">
-      <td class="p-4">
-        <span class="isEditing-hidden">${item.firstname}</span>
-        <input
-          type="text"
-          class="input-firstname isEditing-visible w-full mt-1 block px-3 py-2 bg-gray-100 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-          value="${item.firstname}"
-        />
-      </td>
-      <td class="p-4">
-        <span class="isEditing-hidden">${item.lastname}</span>
-        <input
-          type="text"
-          class="input-lastname isEditing-visible w-full mt-1 block px-3 py-2 bg-gray-100 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-          value="${item.lastname}"
-        />
-      </td>
-      <td class="p-4">
-        <span class="isEditing-hidden">${item.email}</span>
-        <input
-          type="text"
-          class="input-email isEditing-visible w-full mt-1 block px-3 py-2 bg-gray-100 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-          value="${item.email}"
-        />
-      </td>
-      <td class="p-4">
-        <div class="flex justify-end space-x-2">
-          <button
-            class="btn-edit isEditing-hidden bg-yellow-400 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded-md"
-          >
-            <i class="fa-solid fa-pen-to-square"></i>
-          </button>
-          <button
-            class="btn-delete isEditing-hidden bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md"
-          >
-            <i class="fa-solid fa-trash"></i>
-          </button>
-          <button
-            class="btn-check isEditing-visible bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md"
-          >
-            <i class="fa-solid fa-check"></i>
-          </button>
-        </div>
-      </td>
-    </tr>`;
+    // Filtrage dynamique (Recherche)
+    const searchWords = searchInput.value.toLowerCase().trim().split(/\s+/).filter(Boolean);
+    if (searchWords.length > 0) {
+        processedContacts = processedContacts.filter(contact => {
+            const firstname = contact.firstname || '';
+            const lastname = contact.lastname || '';
+            const email = contact.email || '';
+            const fullText = `${firstname} ${lastname} ${email}`.toLowerCase();
+            return searchWords.every(word => fullText.includes(word));
+        });
+    }
 
-    renderContactsCount();
-}
+    // Tri dynamique en une seule passe (Gestion du niveau +1 pour undefined)
+    processedContacts.sort((contactA, contactB) => {
+        const valA = contactA[sortBy] ? String(contactA[sortBy]) : '';
+        const valB = contactB[sortBy] ? String(contactB[sortBy]) : '';
 
-//Function appendNewItemInARRAY
-function appendNewItemInARRAY(item) {
-    contacts.push(item);
-    updateLocalStorage();
-}
+        return sortOrder === 'asc' 
+            ? valA.localeCompare(valB) 
+            : valB.localeCompare(valA);
+    });
 
-//Function pour mettre à jour le localStorage
-function updateLocalStorage() {
-    localStorage.contacts = JSON.stringify(contacts);
-}
+    // Nettoyage et injection dans le DOM
+    contactsContainer.innerHTML = ''; // On vide le tableau précédent
+    
+    processedContacts.forEach(contact => {
+        const row = document.createElement('tr');
+        row.dataset.id = contact.id;
+        row.className = `contact-row ${contact.isEditing ? 'isEditing' : ''}`;
+        
+        row.innerHTML = `
+            <td class="p-4">
+                <span class="isEditing-hidden">${contact.firstname || ''}</span>
+                <input type="text" class="input-firstname isEditing-visible w-full mt-1 block px-3 py-2 bg-gray-100 border border-gray-300 rounded-md shadow-sm" value="${contact.firstname || ''}" />
+            </td>
+            <td class="p-4">
+                <span class="isEditing-hidden">${contact.lastname || ''}</span>
+                <input type="text" class="input-lastname isEditing-visible w-full mt-1 block px-3 py-2 bg-gray-100 border border-gray-300 rounded-md shadow-sm" value="${contact.lastname || ''}" />
+            </td>
+            <td class="p-4">
+                <span class="isEditing-hidden">${contact.email || ''}</span>
+                <input type="text" class="input-email isEditing-visible w-full mt-1 block px-3 py-2 bg-gray-100 border border-gray-300 rounded-md shadow-sm" value="${contact.email || ''}" />
+            </td>
+            <td class="p-4">
+                <div class="flex justify-end space-x-2">
+                    <button class="btn-edit isEditing-hidden bg-yellow-400 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded-md">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                    </button>
+                    <button class="btn-delete isEditing-hidden bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                    <button class="btn-check isEditing-visible bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md">
+                        <i class="fa-solid fa-check"></i>
+                    </button>
+                </div>
+            </td>
+        `;
+        contactsContainer.append(row);
+    });
 
-//Function pour afficher le nombre total de contacts
-function renderContactsCount() {
+    // Mise à jour du compteur (basé sur le tableau global initial)
     contactsCountElement.innerText = contacts.length;
 }
 
-//Capture des événements -------------------------------------------------------
+// Fonction utilitaire de sauvegarde
+function updateLocalStorage() {
+    localStorage.setItem('contacts', JSON.stringify(contacts));
+}
 
-//Ajout d'un contact au clic sur le bouton Add
+// Fonction de basculement/interrupteur du tri
+function toggleSort(column) {
+    if (sortBy === column) {
+        sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+    } else {
+        sortBy = column;
+        sortOrder = 'asc';
+    }
+    renderList(); // On redessine avec le nouveau tri
+}
+
+// -----------------------------------------------------------------------------
+// 🛒 CAPTURE DES ÉVÉNEMENTS
+// -----------------------------------------------------------------------------
+
+// Gestion du tri au clic sur les en-têtes (Nécessite d'ajouter data-sort dans le HTML)
+sortableHeaders.forEach(header => {
+    header.addEventListener('click', () => {
+        toggleSort(header.dataset.sort);
+    });
+});
+
+// Barre de recherche en temps réel
+searchInput.addEventListener('input', renderList);
+
+// Ajout d'un contact
 btnAdd.addEventListener('click', function () {
-    const newItem = {
+    if (!addFirstname.value || !addLastname.value || !addEmail.value) return;
+
+    const newContact = {
         id: Date.now(),
         firstname: addFirstname.value,
         lastname: addLastname.value,
@@ -108,93 +133,52 @@ btnAdd.addEventListener('click', function () {
         isEditing: false
     };
 
-    appendNewItemInARRAY(newItem);
-    createContactInDOM(newItem);
-
-    //Vider le formulaire
+    contacts.push(newContact);
+    updateLocalStorage();
+    
+    // Reset du formulaire
     addFirstname.value = "";
     addLastname.value = "";
     addEmail.value = "";
+
+    renderList();
 });
 
-//Capture par délégation pour les actions modifier, valider et supprimer
+// ÉCOUTEUR UNIQUE (Centralisé par délégation) pour Edit, Delete et Check
 contactsContainer.addEventListener('click', function(e) {
-    //Récupère le tr du DOM
-    const contactElement= e.target.closest('tr');
-    //Recupère l'item du ARRAY
-    const contactFound = contacts.find(item => item.id === Number(contactElement.dataset.id));
-    //MODIFIER
-    if (e.target.matches('.btn-edit') || e.target.closest('.btn-edit')) {
-        contactFound.isEditing = true;
-        contactElement.classList.add('isEditing');
-        updateLocalStorage();
-    }
-    //SUPPRIMER
-    if (e.target.matches('.btn-delete') || e.target.closest('.btn-delete')) {
-        const itemIndex = contacts.findIndex(item => item.id === Number(contactElement.dataset.id));
-        contacts.splice(itemIndex, 1);
-        contactElement.remove();
-        updateLocalStorage();
-        renderContactsCount();
-    }
-});
-
-//Enregistrer le modif lors du click sur le bouton Check
-contactsContainer.addEventListener('click', function(e) {
-    //VALIDER
     const contactElement = e.target.closest('tr');
     if (!contactElement) return;
-    if (e.target.matches('.btn-check') || e.target.closest('.btn-check')) {
-        const contactFound = contacts.find(item => item.id === Number(contactElement.dataset.id));
-        if (!contactElement) {
-            console.warn("Impossible de modifier : le contact n'existe pas dans le tableau.");
-            return; 
-        }
-        const newFirstname = contactElement.querySelector('.input-firstname').value;
-        const newLastname = contactElement.querySelector('.input-lastname').value;
-        const newEmail = contactElement.querySelector('.input-email').value;
+    
+    const contactId = Number(contactElement.dataset.id);
+    const contactFound = contacts.find(c => c.id === contactId);
+    if (!contactFound) return;
 
-        //Mise à jour du ARRAY
-        contactFound.firstname= newFirstname;
-        contactFound.lastname= newLastname;
-        contactFound.email= newEmail;
-        contactFound.isEditing= false;
-
-        //Mise à jour du DOM
-        contactElement.querySelectorAll('.isEditing-hidden')[0].innerText = newFirstname;
-        contactElement.querySelectorAll('.isEditing-hidden')[1].innerText = newLastname;
-        contactElement.querySelectorAll('.isEditing-hidden')[2].innerText = newEmail;
-
-        //Sortie du mode edition
-        contactElement.classList.remove('isEditing');
+    // ACTION : MODIFIER
+    if (e.target.closest('.btn-edit')) {
+        contactFound.isEditing = true;
+        renderList();
+    }
+    
+    // ACTION : SUPPRIMER
+    else if (e.target.closest('.btn-delete')) {
+        const itemIndex = contacts.findIndex(c => c.id === contactId);
+        contacts.splice(itemIndex, 1);
+        updateLocalStorage();
+        renderList();
+    }
+    
+    // ACTION : VALIDER (CHECK)
+    else if (e.target.closest('.btn-check')) {
+        contactFound.firstname = contactElement.querySelector('.input-firstname').value;
+        contactFound.lastname = contactElement.querySelector('.input-lastname').value;
+        contactFound.email = contactElement.querySelector('.input-email').value;
+        contactFound.isEditing = false;
 
         updateLocalStorage();
+        renderList();
     }
 });
 
-//BARRE DE RECHERCHE (BONUS)
-searchInput.addEventListener('input', function() {
-    //Nettoyage du texte et découpage en plusieurs mots separés pau un espace
-    //Filter boolean permet d'éviter les bugs si l'user met plusieurs espaces
-    const filterText = this.value.toLowerCase().trim().split(/\s+/).filter(Boolean);
-    const rows = contactsContainer.querySelectorAll('tr');
-
-    rows.forEach((row)=> {
-        //On récupère les contacts dans le tableau grâce à son ID unique
-        const item = contacts.find(item => item.id === Number(row.dataset.id));
-
-        if (item) {
-        //On fusionne les datas depuis l'objet Javascript
-        const fullRowText = `${item.firstname} ${item.lastname} ${item.email}`.toLowerCase();
-
-        //On verifie si chaque mot se trouve dans le texte de la ligne
-        //every() renvoi true seulement si tous les mots sont presents
-        const matchesAllWords = filterText.every(word => fullRowText.includes(word));
-
-        //Si le texte écrit correspond aux datas on affiche la ligne sinon on la cache
-        row.style.display = matchesAllWords ? "" : "none";
-        }    
-    });
-});
-
+// Initialisation au premier chargement de la page
+renderList();
 
