@@ -14,14 +14,14 @@ const sortableHeaders = appElement.querySelectorAll(".contacts-table th[data-sor
 const addFirstname = appElement.querySelector("#input-firstname");
 const addLastname = appElement.querySelector("#input-lastname");
 const addEmail = appElement.querySelector("#input-email");
-const btnAdd = appElement.querySelector("#btn-add");
+const addForm = appElement.querySelector("#form-add-contact");
 
 // Variables d'état pour le tri dynamique (Équivalent du State Alpine)
 let sortBy = 'firstname';
 let sortOrder = 'asc';
 
 // -----------------------------------------------------------------------------
-// 🎯 LA FONCTION CENTRALE : Génération du résultat visuel (Filtre + Tri + Render)
+// LA FONCTION CENTRALE : Génération du résultat visuel (Filtre + Tri + Render)
 // -----------------------------------------------------------------------------
 function renderList() {
     // Copie non-destructive pour le traitement
@@ -108,7 +108,7 @@ function toggleSort(column) {
 }
 
 // -----------------------------------------------------------------------------
-// 🛒 CAPTURE DES ÉVÉNEMENTS
+// CAPTURE DES ÉVÉNEMENTS
 // -----------------------------------------------------------------------------
 
 // Gestion du tri au clic sur les en-têtes (Nécessite d'ajouter data-sort dans le HTML)
@@ -122,9 +122,11 @@ sortableHeaders.forEach(header => {
 searchInput.addEventListener('input', renderList);
 
 // Ajout d'un contact
-btnAdd.addEventListener('click', function () {
-    if (!addFirstname.value || !addLastname.value || !addEmail.value) return;
+addForm.addEventListener('submit', function (e) {
+    e.preventDefault();
 
+    if (!addFirstname.value.trim() || !addLastname.value.trim() || !addEmail.value.trim()) return;
+    
     const newContact = {
         id: Date.now(),
         firstname: addFirstname.value,
@@ -132,7 +134,7 @@ btnAdd.addEventListener('click', function () {
         email: addEmail.value,
         isEditing: false
     };
-
+    
     contacts.push(newContact);
     updateLocalStorage();
     
